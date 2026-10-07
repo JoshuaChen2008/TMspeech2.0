@@ -192,16 +192,7 @@ public class MainViewModel : ViewModelBase
             .Select(x => x == JobStatus.Running || x == JobStatus.Paused)
             .ToPropertyEx(this, x => x.StopButtonVisible);
 
-        this.LockCommand = ReactiveCommand.Create(() => { 
-            IsLocked = true;
-            // Inform user if user uses it for the first time.
-            var lockedShown = ConfigManagerFactory.Instance.Get<bool>(NotificationConfigTypes.HasShownLockUsage);
-            if (!lockedShown)
-            {
-                ConfigManagerFactory.Instance.Apply(NotificationConfigTypes.HasShownLockUsage, true);
-                NotificationManager.Instance.Notify("锁定成功", "右键托盘图标以解锁", NotificationType.Info);
-            }
-        });
+        this.LockCommand = ReactiveCommand.Create(LockCaption);
 
         this.UnlockCommand = ReactiveCommand.Create(() => { IsLocked = false; });
 
@@ -326,5 +317,37 @@ public class MainViewModel : ViewModelBase
                 p => _jobManager.SentenceDone -= p)
             .Select(x => x.EventArgs.Text)
             .Subscribe(x => { this.HistoryTexts.Add(x); });
+
+        // Status 已切换到 UI 线程；只在进入 Running 时锁定，尊重运行中的手动解锁。
+        this.WhenAnyValue(x => x.Status)
+            .DistinctUntilChanged()
+            .Skip(1)
+            .Where(status => status == JobStatus.Running)
+            .Subscribe(_ =>
+            {
+                // 快速停止或启动回退后，不处理尚未送达 UI 的 Running 状态。
+                if (_jobManager.Status == JobStatus.Running &&
+                    ConfigManagerFactory.Instance.Get<bool>(LockConfigTypes.AutoLockOnStart))
+                {
+                    LockCaption();
+                }
+            });
+    }
+
+    private void LockCaption()
+    {
+        if (IsLocked) return;
+        IsLocked = true;
+
+        var config = ConfigManagerFactory.Instance;
+        if (config.Get<bool>(NotificationConfigTypes.HasShownLockUsage)) return;
+
+        config.Apply(NotificationConfigTypes.HasShownLockUsage, true);
+        var hasUnlockButton = config.Get<bool>(LockConfigTypes.ShowControlBar) &&
+                              config.Get<bool>(LockConfigTypes.ShowUnlock);
+        var unlockHint = hasUnlockButton
+            ? "点击悬浮工具栏的解锁按钮，或右键托盘图标以解锁"
+            : "右键托盘图标以解锁";
+        NotificationManager.Instance.Notify(unlockHint, "锁定成功", NotificationType.Info);
     }
 }

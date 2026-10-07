@@ -221,10 +221,14 @@ namespace TMSpeech.GUI.ViewModels
         public List<int> MainWindowLocation { get; set; } = [];
     }
 
-    /// <summary>锁定字幕后悬浮控制条的设置：显示哪些按钮由用户选择。</summary>
+    /// <summary>字幕自动锁定与锁定后悬浮控制条的设置。</summary>
     public class LockSectionConfigViewModel : SectionConfigViewModelBase
     {
         protected override string SectionName => LockConfigTypes.SectionName;
+
+        [Reactive]
+        [ConfigJsonValue]
+        public bool AutoLockOnStart { get; set; }
 
         [Reactive]
         [ConfigJsonValue]
