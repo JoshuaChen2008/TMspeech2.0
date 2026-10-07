@@ -233,8 +233,15 @@
                   </StackPanel>
 
                   <StackPanel Spacing="6" DataContext="{Binding LockSectionConfig}">
-                    <TextBlock Classes="SectionTitle" Text="锁定字幕后的悬浮工具栏" />
+                    <TextBlock Classes="SectionTitle" Text="字幕锁定" />
                     <Border Classes="Separator" />
+                    <StackPanel Spacing="8" Margin="0,10,0,0">
+                      <TextBlock Text="开始识别后自动锁定字幕" />
+                      <TextBlock Classes="Small Muted" TextWrapping="Wrap"
+                                 Text="开始或恢复识别后自动锁定字幕窗口，避免误点。可通过托盘解锁。" />
+                      <ToggleSwitch IsChecked="{Binding AutoLockOnStart, Mode=TwoWay}"
+                                    OnContent="已开启" OffContent="已关闭" />
+                    </StackPanel>
                     <TextBlock Classes="Small Muted" Margin="0,8,0,0" TextWrapping="Wrap"
                                Text="锁定后字幕窗口鼠标穿透，勾选的按钮会以悬浮小条显示在字幕右上角，无需解锁即可操作。" />
                     <StackPanel Spacing="8" Margin="0,10,0,0">
